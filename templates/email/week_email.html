@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+    <h2>Интересное за неделю:</h2>
+    <ul>
+        {% for ad in ads %}
+            <li><a href="http://127.0.0.1:8000{{ ad.get_absolute_url }}">{{ ad.title }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

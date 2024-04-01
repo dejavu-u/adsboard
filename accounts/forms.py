@@ -5,6 +5,7 @@ import random
 from django.conf import settings
 from django.core.mail import send_mail
 
+
 from ads.models import Author
 
 
@@ -16,6 +17,7 @@ class CustomSignupForm(SignupForm):
         code = ''.join(random.sample(hexdigits, k=5))
         user.code = code
         user.save()
+
         send_mail(
             subject=f'Код потверждения',
             message=f'{user.username}, Ваш код активации: {code}',
@@ -23,4 +25,3 @@ class CustomSignupForm(SignupForm):
             recipient_list=[user.email],
         )
         return user
-

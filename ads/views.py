@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import (ListView, DetailView, CreateView, UpdateView, DeleteView)
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 
@@ -50,17 +50,49 @@ class MyAdsList(LoginRequiredMixin, ListView):
         return Ad.objects.filter(author=author)
 
 
-# создает отклик
-class ReplyCreate(LoginRequiredMixin, CreateView):
-    form_class = ReplyForm
+# список откликов на объявления пользователя
+class ReplyAdList(LoginRequiredMixin, ListView):
     model = Reply
-    template_name = 'ad_detail.html'
+    ordering = '-published_date'
+    template_name = 'my_ads_reply_list.html'
+    context_object_name = 'my_ads_reply_list'
 
-    def form_valid(self, form):
-        obj = form.save(commit=False)
-        obj.user = self.request.user
-        obj.ad = Ad.objects.get(pk=self.kwargs.get('pk'))
-        return super().form_valid(form)
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = Author.objects.get(user=self.request.user)
+        self.filterset = ReplyFilter(self.request.GET, queryset, user=user)
+        return self.filterset.qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['filterset'] = self.filterset
+        return context
+
+
+# список откликов текущего пользователя
+class MyReplyList(LoginRequiredMixin, ListView):
+    model = Reply
+    ordering = '-published_date'
+    template_name = 'my_reply.html'
+    context_object_name = 'my_reply'
+
+    def get_queryset(self):
+        user = self.request.user
+        return Reply.objects.filter(user=user)
+
+
+# список категорий
+class CategoryList(ListView):
+    model = Category
+    template_name = 'category_list.html'
+    context_object_name = 'category_list'
+
+
+# список объявлений выбранной категории
+def show_category(request, pk):
+    category = Category.objects.filter(pk=pk)
+    ads = Ad.objects.filter(category=pk)
+    return render(request, 'category_ads.html', {'category_ads': ads, 'category': category})
 
 
 # страница одного выбранного объявления
@@ -85,34 +117,11 @@ class AdDetail(DetailView):
         return reverse_lazy('ad_detail', kwargs={'pk': self.object.pk})
 
 
-# список откликов на объявления пользователя
-class ReplyAdList(LoginRequiredMixin, ListView):
+# ссылка на выбранный отклик
+class ReplyDetail(LoginRequiredMixin, DetailView):
     model = Reply
-    ordering = '-published_date'
-    template_name = 'my_ads_reply_list.html'
-    context_object_name = 'my_ads_reply_list'
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        user = Author.objects.get(user=self.request.user)
-        self.filterset = ReplyFilter(self.request.GET, queryset, user=user)
-        return self.filterset.qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data()
-        context['filterset'] = self.filterset
-        return context
-
-
-class MyReplyList(LoginRequiredMixin, ListView):
-    model = Reply
-    ordering = '-published_date'
-    template_name = 'my_reply.html'
-    context_object_name = 'my_reply'
-
-    def get_queryset(self):
-        user = self.request.user
-        return Reply.objects.filter(user=user)
+    template_name = 'reply_detail.html'
+    context_object_name = 'reply_detail'
 
 
 # создание объявления
@@ -150,25 +159,17 @@ class AdDelete(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('my_ads')
 
 
-# список категорий
-class CategoryList(ListView):
-    model = Category
-    template_name = 'category_list.html'
-    context_object_name = 'category_list'
-
-
-# список объявлений выбранной категории
-def show_category(request, pk):
-    category = Category.objects.filter(pk=pk)
-    ads = Ad.objects.filter(category=pk)
-    return render(request, 'category_ads.html', {'category_ads': ads, 'category': category})
-
-
-# ссылка на выбранный отклик
-class ReplyDetail(LoginRequiredMixin, DetailView):
+# создание отклика
+class ReplyCreate(LoginRequiredMixin, CreateView):
+    form_class = ReplyForm
     model = Reply
-    template_name = 'reply_detail.html'
-    context_object_name = 'reply_detail'
+    template_name = 'ad_detail.html'
+
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        obj.user = self.request.user
+        obj.ad = Ad.objects.get(pk=self.kwargs.get('pk'))
+        return super().form_valid(form)
 
 
 # принять отклик
@@ -191,9 +192,3 @@ def reject_reply(request, pk):
     reply.save()
 
     return redirect('my_ads_reply_list')
-
-
-    # TODO добавить возможность встроить видео
-    # TODO при отправке отклика получатель должен получить уведомление о нем
-    # TODO при принятии отклика пользователю, кот. отправил отклик, должно прийти уведомление
-    # TODO добавить возможность удаления объявления после принятия отклика

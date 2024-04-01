@@ -20,7 +20,7 @@
     <h3 class="display-6 fw-bold">Сообщение на объявление</h3>
     {% if replies %}
       {% for reply in replies %}
-        {% if user == reply.user %}
+        {% if user == reply.user or user == reply.ad.author.user %}
         <p class="col-md-8 fs-4">{{ reply.content }}</p>
         <p>{{ reply.published_date }} {{ reply.user }}</p>
         <hr>

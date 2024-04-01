@@ -10,7 +10,7 @@ class Author(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
 
-# категории объъявлений
+# категории объявлений
 class Category(models.Model):
     name = models.CharField(max_length=255)
 
@@ -62,5 +62,3 @@ class Reply(models.Model):
 
     def get_absolute_url(self):
         return reverse('ad_detail', args=[str(self.ad_id)])
-
-

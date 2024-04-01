@@ -4,6 +4,7 @@ from django import forms
 from .models import Ad, Category, Reply
 
 
+# поиск по объявлениям
 class AdFilter(FilterSet):
     title = CharFilter(lookup_expr='icontains', label='Поиск по объявлениям')
     category = ModelMultipleChoiceFilter(
@@ -30,6 +31,7 @@ class AdFilter(FilterSet):
         }
 
 
+# фильтрация откликов на объявления
 class ReplyFilter(FilterSet):
     ad = ModelMultipleChoiceFilter(
         field_name='ad_id',
